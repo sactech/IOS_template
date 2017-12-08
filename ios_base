@@ -1,0 +1,99 @@
+ntp server %NTPSERVER1%
+ntp server %NTPSERVER2%
+ntp update-calendar
+!
+logging buffered 500000
+logging rate-limit 10 except critical
+no logging console
+logging %LOG_SERVER%
+!
+service password-encryption
+service tcp-keepalives-in
+service tcp-keepalives-out
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service sequence-numbers
+no service tcp-small-servers
+no service udp-small-servers
+!
+no ip source-route
+no ip finger
+ip routing
+ip cef
+ip dhcp database flash:dhcp_bindings
+ip tcp synwait-time 10
+!
+no ip domain-lookup
+ip domain name %DOMAINNAME%
+ip name-server %NAMESERVER1%
+ip name-server %NAMESERVER2%
+ip subnet-zero
+ip classless
+!
+ip telnet source-interface %SOURCE%
+ip ftp source-interface %SOURCE%
+ip tftp source-interface %SOURCE%
+ip ssh source-interface %SOURCE%
+snmp-server trap-source %SOURCE%
+ip tacacs source-interface %SOURCE%
+ip radius source-interface %SOURCE%
+ntp source %SOURCE%
+logging source-interface %SOURCE%
+!
+ip ssh authentication-retries 3
+ip ssh version 2
+crypto key generate rsa general-purpose modulus 1024
+no ip http server
+no ip http secure-server
+!
+ip access-list standard REMOTE_ACCESS
+ permit X.X.X.X X.X.X.X
+ deny any log
+ip access-list standard SNMP_RO_IN
+ permit x.x.x.x x.x.x.x
+ deny any log
+ip access-list standard SNMP_RW_IN
+ permit y.y.y.y y.y.y.y
+ deny any log
+!
+snmp-server community %SNMPREAD% RO SNMP_RO_IN
+snmp-server community %SNMPWRITE% RW SNMP_RW_IN
+snmp-server ifindex persist
+snmp-server location %LOCATION%
+snmp-server contact %CONTACT%
+snmp-server chassis-id %HOSTNAME%
+snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server enable traps tty
+snmp-server enable traps envmon fan shutdown supply temperature status
+snmp-server enable traps config
+snmp-server enable traps entity
+snmp-server host %SNMP_SERVER% %SNMP_TRAP_STR%
+!
+banner login ~
+
+This device is owned by %COMPANY%. Only authorized users are allowed
+to connect to or use this device. If you are not authorized, disconnect
+immediately. Expect no privacy when using this device. All access and use
+may be monitored and/or recorded. Monitoring and/or recording may be
+turned over to the appropriate authorities. Any unauthorized use may be
+prosecuted to the full extent of the law. Use of the system implies consent
+to the previously mentioned conditions.
+
+~
+!
+line console 0
+logging synchronous
+exec-timeout 15 0
+usb-inactivity-timeout 15
+exec prompt timestamp
+transport preferred none
+
+line vty 0 15
+logging synchronous
+exec-timeout 15 0
+exec prompt timestamp
+transport input ssh
+transport preferred none
+access-class REMOTE_ACCESS in
+!
+
